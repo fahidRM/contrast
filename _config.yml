@@ -16,8 +16,12 @@ minimal: false             # use a dark header
 # Menu
 
 navigation:                # accepts {file, title, url, icon, sidebaricon}
+  - {file: "gdpr.md"}
   - {file: "index.md"}
   - {file: "README.md"}
+  - {file: "people.md"}
+  - {file: "publications.md"}
+  - {file: "downloads.md"}
 
 external:                  
   - {title: Github, icon: github, url: "https://github.com/instsuite/instal-stable"}
