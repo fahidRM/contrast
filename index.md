@@ -1,10 +1,8 @@
 ---
-title: "Home"
+title: "Welcome to the InstAL project pages"
 permalink: "/home/"
 layout: page
 ---
-
-## Welcome to the InstAL project pages
 
 InstAL is the Institutional Action Language.
 
