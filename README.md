@@ -1,99 +1,243 @@
 ---
-title: "About"
-permalink: "/about/"
+title: "Guide"
+permalink: "/guide/"
 layout: page
 ---
 
-## Installation
+## Introduction
 
-Just fork this [repository](https://github.com/niklasbuschmann/contrast) and adjust the `_config.yml` to use with [Github Pages](https://pages.github.com/) and your page is done.
+To illustrate the use of InstAL and the tools we have developed, we present a full worked example of the [tendering scenario](https://doi.org/10.1007/978-3-319-33570-4_2) that appears in:
 
-## Features
+InstAL: An Institutional Action Language. Padget, J., Elakehal, E., Li, T. & De Vos, M., 2016, Social Coordination Frameworks for Social Technical Systems. Springer Verlag, Vol. 30. p. 101 124 p. (Law, Governance and Technology Series ). [https://doi.org/10.1007/978-3-319-33570-4_6](https://doi.org/10.1007/978-3-319-33570-4_6).
 
- - supports dark mode on macOS Mojave
- - optional sidebar
- - MathJax support
- - no external ressources
- - included archive page
- - supports pagination
- - feed generation
- - responsive
- - syntax highlighting
- - supports comments via [disqus](https://disqus.com/) or [isso](http://posativ.org/isso/)
 
-## Based on
 
-- [Hyde](https://github.com/poole/hyde)
-- [Minima](https://github.com/jekyll/minima)
-- [Lagrange](https://github.com/LeNPaul/Lagrange)
-- [Font Awesome](http://fontawesome.io/)
-- [KaTeX](https://katex.org/)
-- [Pygments](https://github.com/richleland/pygments-css)
+## The Tendering Scenario
 
-## Installation (jekyll-remote-theme method)
+A request for tenders (RFT) is a formal, structured invitation to suppliers, to bid, to supply products or services. For example, a company or government may put a building project ‘out to tender’; that is, publish an invitation for other parties to make a proposal for the building’s construction.
 
-You can use this theme with the `jekyll-remote-theme` plugin. Just create an empty repo, copy over the `index.html` file and add this to your `_config.yml`:
+The aim of the process is to ensure best supplier possible for the requested service or product, such that no parties having the unfair advantage of separate, prior, closed-door negotiations for the contract. Actors, or stakeholders are: contracting authority, bidders consortium (possibly consisting of several partners), evaluators, publication body, … etc.
+
+A system for RFT should handle more than one RFT at the same time: i.e. there can be more than one contracting authorities putting out RFT to be fulfilled by different bidder consortia, and possibly advertised by different publication bodies.
+
+A RFT process consists of (at least) the following stages
+
+1. Tender elaboration: decide on terms, conditions, deadlines, etc. for the RFT
+2. Publication: publication of the tender and/or distributed to potential bidders
+3. Request for information: interested bidders can ask for further information to clarify any uncertainties;
+4. Bid preparation
+5. Bid submission
+6. Bid evaluation and decision: An evaluation team will go through the tenders and decide who will get the contract. Each tender will be checked for compliance and if compliant, then evaluated against the criteria specified in the tender documentation. The tender that offers best value for money will win the business.
+7. Notification: When a contract has been awarded, the successful tenderer will be advised in writing of the outcome. Unsuccessful tenderers are also informed
+8. Contract formation: a formal agreement will be required between the successful tenderer and the contracting authority
+
+Some of the norms holding in this scenario are (examples):
+
+
+- Bids must be submitted before the deadline
+- Reviewers have to submit their evaluation on time
+- All bids must be written in English
+- Bids include at least X and at most Y partners
+- Each tender must receive at least Z different bids
+- Reviewers and requester cannot participate in any bid consortium
+- Bids must be blind
+
+This use case outline is informed by the terminology and description at [https://en.wikipedia.org/wiki/Request_for_tender](https://en.wikipedia.org/wiki/Request_for_tender). The InstAL modelling of the use case does not necessarily include all the stages and norms noted above.
+ 
+## Constructing a Model
+InstAL models are built around events, who is permitted/empowered to cause them and the effects they have on institutional states, therefore the informal methodology for model specification is to examine the use case for actors, events and facts that need to be remembered. The events typically become external events in the specification, parameterised by relevant information, such the actors responsible for them, while facts become fluents, again parameterised by relevant information, that are initiated or terminated by (institutional) events subject to the institutional state at the time. Some scenarios contain more than one activity, in which case, it can be appropriate to map each activity to a separate institution and then specify cross-generation and cross-consequence rules to capture the interactions between them.
+
+In the case of the tendering scenario, it is clear there are several phases, each of which we have chosen to map to a separate institutional specification, namely publication, review, decision and notification.Various events can be identified from the scenario description associated with each of the phases, which become external events in the specification. Taking the publication phase) as an example, there are also exceptional events, such as a submission after the deadline, which is captured as a violation event, if an actor does not meet the obligation to submit a bid before the end of the submission phase. Lastly, an institutional state or condition can be captured through the use of a non-inertial fluent, in this case to signal that a separation of roles has not been observed.
+
+Once a specification comprises several institutions, it becomes necessary to consider how they may affect one another. This aspect is expressed using cross-generation and cross-consequence rules, as illustrated in Figure 4. In particular, the figure shows that the institutional event intSubmissionDue in the publication institution generates the external event reviewStarts in the review institution, with corresponding similar cross-generation rules connecting review and decision and decision and notification. Similarly, an event in one institution can bring about a change of state in another, such as the submission of a bid (intSubmitBid) in publication leading to the initiation of the fluent readForReview in the review institution.
+
+
+<!-- (todo: describe workflow for creating an institution here) -->
+
+
+## The publication phase
+
+An institutions has a name (publication), some types for the parameters to events, and exogenous, institutional and violation events:
 
 ```yaml
-remote_theme: niklasbuschmann/contrast@v2.11
 
-plugins:
-  - jekyll-remote-theme
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% RFT Scenorio -- Publication Phase: 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% institution name
+institution publication;
+% types
+type RFT;    
+type Agent;    
+type Bid;  
+type Role;      
+type Number; 
+type Decision;
+
+% exogenous events 
+exogenous event publishRFT(Agent, RFT); 
+exogenous event registerBid(Agent, Bid, RFT);
+exogenous event submitBid(Agent, Bid, RFT); 
+exogenous event notifyReceipt(Agent, Bid, RFT); 
+exogenous event receiptDue(Agent, Bid, RFT); 
+exogenous event submissionDue(RFT);
+
+% inst events
+inst event intPublishRFT(Agent, RFT); 
+inst event intRegisterBid(Agent, Bid, RFT);
+inst event intSubmitBid(Agent, Bid, RFT); 
+inst event intNotifyReceipt(Agent, Bid, RFT); 
+inst event intReceiptDue(Agent, Bid, RFT); 
+inst event intSubmissionDue(RFT);
+
+% violation events
+% used as violation in obl of submission by due 
+violation event lateSubmission(Agent, Bid, RFT);
+violation event lateReceipt(Agent, Bid, RFT);
+
 ```
 
-Note: to enable icons you also need to copy over the `_data` folder.
+The state of the institution is represented as a set of fluents. Inertial fluents are added to the institutional state by initiates rule (q.v.), removed from it by terminates rules (q.v), and otherwise persist from state to state, because they are inertial. Inertial fluents include domain fluents:
 
-## Config
-
-Your `_config.yml` could for example look like this:
 
 ```yaml
-title: "Blog Title"
-author: "Blog Author"
-description: "My personal blog about ... something"
-permalink: /:title/
-lang: "en"
-excerpt_separator: "\n\n\n"
-date_format: "%B %d, %Y"
-
-# Layout
-
-show_excerpts: true        # show article excerpts on the home page
-show_frame: true           # adds a gray frame to the site
-show_sidebar: false        # show a sidebar instead of the usual header
-
-# Menu
-
-navigation:                # accepts {file, title, url, icon, sidebaricon}
-  - {file: "index.html"}
-  - {file: "README.md"}
-
-external:                  # shows a footer with social links - for available icons see fontawesome.com/icons
-  - {title: Mail, icon: envelope, url: "mailto:niklasbuschmann@users.noreply.github.com"}
-  - {title: Github, icon: github, url: "https://github.com/niklasbuschmann/contrast"}
-  - {title: Subscribe, icon: rss, url: "/feed.xml"}
-
-comments:
-#  disqus_shortname: ""    # see https://disqus.com/
-#  isso_domain: ""         # see https://posativ.org/isso/
-
-plugins:
- - jekyll-feed
-
+% fluents
+fluent roleOf(Agent, Role); 
+fluent bidsReceived(RFT, Number); 
+fluent nextNum(Number, Number);  
+fluent sufficientBids(RFT);
+fluent bidSubmitted(RFT, Bid, Agent);
 ```
 
-## MathJax
+and institutional fluents, such as permissions, powers, which here are declared to be present in the initial institutional state:
 
-Contrast comes preinstalled with a leightweight alternative to MathJax called [KaTeX](https://katex.org/). To display equations in a post simply set `mathjax: true` in the article's front matter.
+```yaml
+% initially
+initially perm(publishRFT(Agent, RFT)),
+          perm(intPublishRFT(Agent, RFT)), 
+          pow(intPublishRFT(Agent, RFT)); 
 
-## License
+initially perm(receiptDue(Agent, Bid, RFT)),
+          perm(intReceiptDue(Agent, Bid, RFT)),
+          pow(intReceiptDue(Agent, Bid, RFT)); 
 
-[public domain](http://unlicense.org/)
+initially perm(submissionDue(RFT)),
+          perm(intSubmissionDue(RFT)),
+          pow(intSubmissionDue(RFT));          
 
-## Screenshots
+initially roleOf(ting, requester),
+          roleOf(alice, bidder),
+          roleOf(bob, bidder); 
 
-![screenshot](https://user-images.githubusercontent.com/4943215/109431850-cd711780-7a08-11eb-8601-2763f2ee6bb4.png)
+initially nextNum(n0, n1),  nextNum(n1, n2),  nextNum(n2, n3); 
 
-![screenshot](https://user-images.githubusercontent.com/4943215/109431832-b6cac080-7a08-11eb-9c5e-a058680c23a1.png)
+initially bidsReceived(RFT, n0);
+```
 
-![screenshot](https://user-images.githubusercontent.com/4943215/73125194-5f0b8b80-3fa4-11ea-805c-8387187503ad.png)
+and obligations, which take the form obl(e,d,v), where e is the event that should happen, by deadline d, or else violation v happens:
+
+```yaml
+% obligation fluent
+obligation fluent obl(submitBid(Agent, Bid, RFT),
+	   	                intSubmissionDue(RFT),
+		                  lateSubmission(Agent, Bid, RFT)); 
+obligation fluent obl(notifyReceipt(Agent, Bid, RFT),
+                      intReceiptDue(Agent, Bid, RFT),
+                      lateReceipt(Agent, Bid, RFT));
+```
+
+The state may also be augmentd with non-inertial fluents. These are present in the institutional state only if their controlling conditions over the institutional state are satisified. Here they are used to model that an agent may not simultaneously be a bidder and a requester or be a bidder and an evaluator:
+
+```yaml
+% non-inertial fluents
+noninertial fluent violated(Agent);
+
+violated(Agent) when
+   roleOf(Agent, bidder), roleOf(Agent, requester); 
+
+violated(Agent) when
+   roleOf(Agent, bidder), roleOf(Agent, evaluator); 
+```
+
+The generates rules correspond to the notion of counts-as, so that an exogenous event brings about an institution event only if it is permitted, empowered needs revision to account for new semantics and satisfies any other condition that may be associated with the generation rule. Here the permissions and powers are set up through the initially declarations above, while some of the rules check the the agent role is correct for the agent assocaited with the exogenous event. <!-- todo:need to explain why perm is not right way to do this -->
+
+```yaml
+% generation rules 
+publishRFT(Agent, RFT) generates
+   intPublishRFT(Agent, RFT)
+   if roleOf(Agent, requester); 
+registerBid(Agent, Bid, RFT) generates
+   intRegisterBid(Agent, Bid, RFT)
+   if roleOf(Agent, bidder);
+submitBid(Agent, Bid, RFT) generates
+   intSubmitBid(Agent, Bid, RFT)
+   if roleOf(Agent, bidder); 
+submitBid(Agent, Bid, RFT) generates
+   intReceiptDue(Agent, Bid, RFT)
+   if roleOf(Agent, bidder) in 2; 
+notifyReceipt(Agent, Bid, RFT) generates
+   intNotifyReceipt(Agent, Bid, RFT); 
+submissionDue(RFT) generates
+   intSubmissionDue(RFT);
+```
+
+```yaml
+% consequence rules
+intPublishRFT(Agent, RFT) initiates
+   perm(registerBid(Agent1, Bid, RFT)), 
+   perm(intRegisterBid(Agent1, Bid, RFT)),
+   pow(intRegisterBid(Agent1, Bid, RFT))
+   if roleOf(Agent1, bidder);
+
+intRegisterBid(Agent, Bid, RFT) initiates
+   perm(submitBid(Agent, Bid, RFT)) ,
+   perm(intSubmitBid(Agent, Bid, RFT)),
+   pow(intSubmitBid(Agent, Bid, RFT)),
+   obl(submitBid(Agent, Bid, RFT),
+       intSubmissionDue(RFT),
+       lateSubmission(Agent, Bid, RFT));
+
+intSubmitBid(Agent, Bid, RFT) initiates
+   perm(notifyReceipt(Agent, Bid, RFT)), 
+   perm(intNotifyReceipt(Agent, Bid, RFT)),
+   pow(intNotifyReceipt(Agent, Bid, RFT)); 
+
+intSubmitBid(Agent, Bid, RFT) initiates
+   bidSubmitted(RFT, Bid, Agent); 
+
+intSubmitBid(Agent, Bid, RFT) initiates
+   bidsReceived(RFT, Number2)
+   if nextNum(Number1, Number2), bidsReceived(RFT, Number1);
+
+intSubmitBid(Agent, Bid, RFT) terminates
+   bidsReceived(RFT, Number)
+   if bidsReceived(RFT, Number);
+
+intSubmitBid(Agent, Bid, RFT) initiates
+   sufficientBids(RFT)
+   if bidsReceived(RFT, n1); 
+
+intSubmitBid(Agent, Bid, RFT) initiates
+   obl(notifyReceipt(Agent, Bid, RFT),
+       intReceiptDue(Agent, Bid, RFT),
+       lateReceipt(Agent, Bid, RFT)); 
+
+intSubmissionDue(RFT) terminates
+   perm(registerBid(Agent, Bid, RFT)), 
+   perm(intRegisterBid(Agent, Bid, RFT)),
+   pow(intRegisterBid(Agent, Bid, RFT)),
+   perm(submitBid(Agent, Bid, RFT)),
+   perm(intSubmitBid(Agent, Bid, RFT)),
+   pow(intSubmitBid(Agent, Bid, RFT)); 
+```
+
+## [pending] The submission phase
+## [pending] The review phase
+## [pending] The decision phase
+## [pending] The notification phase
+## [pending]  Bridges
+## [pending]  A Sample Trace
+## [pending]  A State Visualization
+## [pending] An Event Visualization
+
